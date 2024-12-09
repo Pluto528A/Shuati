@@ -1,4 +1,4 @@
-package mianshishua.manager;
+package com.fun.mianshishua.manager;
 
 import javax.annotation.Resource;
 import org.junit.jupiter.api.Test;

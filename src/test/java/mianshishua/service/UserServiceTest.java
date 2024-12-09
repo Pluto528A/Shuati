@@ -1,4 +1,4 @@
-package mianshishua.service;
+package com.fun.mianshishua.service;
 
 import javax.annotation.Resource;
 import org.junit.jupiter.api.Assertions;
