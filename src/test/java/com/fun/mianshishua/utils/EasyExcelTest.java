@@ -1,4 +1,4 @@
-package mianshishua.utils;
+package com.fun.mianshishua.utils;
 
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.support.ExcelTypeEnum;

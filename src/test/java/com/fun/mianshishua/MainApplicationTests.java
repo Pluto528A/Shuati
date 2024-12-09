@@ -1,4 +1,4 @@
-package mianshishua;
+package com.fun.mianshishua;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
