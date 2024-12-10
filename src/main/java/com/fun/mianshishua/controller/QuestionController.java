@@ -14,6 +14,7 @@ import com.fun.mianshishua.model.dto.question.QuestionAddRequest;
 import com.fun.mianshishua.model.dto.question.QuestionEditRequest;
 import com.fun.mianshishua.model.dto.question.QuestionQueryRequest;
 import com.fun.mianshishua.model.dto.question.QuestionUpdateRequest;
+import com.fun.mianshishua.model.dto.questionBankQuestion.QuestionBankQuestionBatchAddRequest;
 import com.fun.mianshishua.model.entity.Question;
 import com.fun.mianshishua.model.entity.User;
 import com.fun.mianshishua.model.vo.QuestionVO;
@@ -46,7 +47,7 @@ public class QuestionController {
     private UserService userService;
 
     @Resource
-    private QuestionBankQuestionService quebankquestionService;
+    private QuestionBankQuestionService questionBankQuestionService;
 
     // region 增删改查
 
@@ -261,6 +262,29 @@ public class QuestionController {
         Page<Question> questionPage = questionService.searchFromEs(questionQueryRequest);
         return ResultUtils.success(questionService.getQuestionVOPage(questionPage, request));
     }
+
+    /**
+     * 批量添加题目到题库
+     *
+     * @param questionBankQuestionBatchAddRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/add/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> batchAddQuestionsToBank(
+            @RequestBody QuestionBankQuestionBatchAddRequest questionBankQuestionBatchAddRequest,
+            HttpServletRequest request
+    ) {
+        // 参数校验
+        ThrowUtils.throwIf(questionBankQuestionBatchAddRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        Long questionBankId = questionBankQuestionBatchAddRequest.getQuestionBankId();
+        List<Long> questionIdList = questionBankQuestionBatchAddRequest.getQuestionIdList();
+        questionBankQuestionService.batchAddQuestionsToBank(questionIdList, questionBankId, loginUser);
+        return ResultUtils.success(true);
+    }
+
 
 
     // endregion

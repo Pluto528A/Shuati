@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fun.mianshishua.common.ErrorCode;
 import com.fun.mianshishua.constant.CommonConstant;
+import com.fun.mianshishua.exception.BusinessException;
 import com.fun.mianshishua.exception.ThrowUtils;
 import com.fun.mianshishua.mapper.QuestionMapper;
 import com.fun.mianshishua.model.dto.question.QuestionEsDTO;
@@ -40,6 +41,7 @@ import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -63,7 +65,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
     private UserService userService;
 
     @Resource
-    private QuestionBankQuestionService quebankquestionService;
+    private QuestionBankQuestionService questionBankQuestionService;
 
     @Autowired
     private ElasticsearchRestTemplate elasticsearchRestTemplate;
@@ -268,7 +270,7 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
                     .select(QuestionBankQuestion::getQuestionId)
                     .eq(QuestionBankQuestion::getQuestionBankId, questionBankId);
 
-            List<QuestionBankQuestion> questionList = quebankquestionService.list(lambdaQueryWrapper);
+            List<QuestionBankQuestion> questionList = questionBankQuestionService.list(lambdaQueryWrapper);
             if (CollUtil.isNotEmpty(questionList)) {
                 Set<Long> questionIdSet = questionList.stream().map(QuestionBankQuestion::getQuestionId).collect(Collectors.toSet());
                 queryWrapper.in("id", questionIdSet);
@@ -361,5 +363,32 @@ public class QuestionServiceImpl extends ServiceImpl<QuestionMapper, Question> i
         page.setRecords(resourceList);
         return page;
     }
+
+    /**
+     * 批量删除题目
+     *
+     * @param questionIdList
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchDeleteQuestions(List<Long> questionIdList) {
+        if (CollUtil.isEmpty(questionIdList)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "要删除的题目列表为空");
+        }
+        for (Long questionId : questionIdList) {
+            boolean result = this.removeById(questionId);
+            if (!result) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "删除题目失败");
+            }
+            // 移除题目题库关系
+            LambdaQueryWrapper<QuestionBankQuestion> lambdaQueryWrapper = Wrappers.lambdaQuery(QuestionBankQuestion.class)
+                    .eq(QuestionBankQuestion::getQuestionId, questionId);
+            result = questionBankQuestionService.remove(lambdaQueryWrapper);
+            if (!result) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "删除题目题库关联失败");
+            }
+        }
+    }
+
 
 }
