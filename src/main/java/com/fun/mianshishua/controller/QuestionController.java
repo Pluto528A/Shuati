@@ -30,6 +30,7 @@ import com.fun.mianshishua.model.vo.QuestionVO;
 import com.fun.mianshishua.service.QuestionBankQuestionService;
 import com.fun.mianshishua.service.QuestionService;
 import com.fun.mianshishua.service.UserService;
+import com.fun.mianshishua.utils.CrawlerDetect;
 import com.jd.platform.hotkey.client.callback.JdHotKeyStore;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
@@ -58,6 +59,9 @@ public class QuestionController {
 
     @Resource
     private QuestionBankQuestionService questionBankQuestionService;
+
+    @Resource
+    private CrawlerDetect crawlerDetect;
 
     // region 增删改查
 
@@ -152,6 +156,10 @@ public class QuestionController {
     @GetMapping("/get/vo")
     public BaseResponse<QuestionVO> getQuestionVOById(long id, HttpServletRequest request) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
+
+        // 检测和处置爬虫
+        User loginUser = userService.getLoginUser(request);
+        crawlerDetect.detect(loginUser.getId());
 
         // 生成 key
         String key = "question_detail_" + id;
